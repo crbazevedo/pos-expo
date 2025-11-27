@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from pos_expo.tilt import PosExpoReweighter
 from pos_expo.datasets.synthetic import make_toy_selection_bias
 from pos_expo.core import StructuralFeatureMap
@@ -49,9 +50,6 @@ def test_posexpo_reweighter_no_input_raises():
     X_train = np.random.randn(10, 2)
     reweighter = PosExpoReweighter(feature_map=IdentityFeatureMap())
     
-    try:
+    with pytest.raises(ValueError, match="Either iw_star or X_ref must be provided"):
         reweighter.fit(X_train, iw_star=None, X_ref=None)
-        assert False, "Should raise ValueError when neither iw_star nor X_ref is provided"
-    except ValueError:
-        pass
 

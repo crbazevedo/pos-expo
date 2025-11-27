@@ -16,7 +16,7 @@ class DiversityFeature(BaseEstimator, TransformerMixin):
     def __init__(self, n_clusters: int = 10, random_state: int = 42) -> None:
         self.n_clusters = n_clusters
         self.random_state = random_state
-        self.kmeans_: Optional[MiniBatchKMeans] = None
+        self.kmeans_: Optional[KMeans] = None
 
     def fit_transform(
         self,
