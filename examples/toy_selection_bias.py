@@ -30,26 +30,11 @@ def main():
     
     # 3. POS-Expo
     print("\nTraining POS-Expo...")
-    # Define features: Rarity, Difficulty (using base ERM model), Diversity
-    # We pass the ERM model as base_model to features if needed (DifficultyFeature uses it)
-    # Note: PosExpoClassifier will fit the feature map.
-    # DifficultyFeature needs a base_model. We can pass the pre-trained ERM or let it handle it.
-    # The default DifficultyFeature expects a base_model to compute loss. 
-    # PosExpoClassifier currently doesn't automatically train a separate model for DifficultyFeature 
-    # before reweighting.
-    # Strategy: Pass a pre-trained simple model to DifficultyFeature?
-    # Or just use Diversity/Rarity.
+    # Define features: Rarity, Difficulty (using base ERM model), Diversity.
+    # Note: In this example, DifficultyFeature will not be used, as passing a base_model is not currently supported.
     
     # Let's use a composite map.
     feature_map = build_default_feature_map()
-    
-    # For difficulty, we might want to populate it. 
-    # Currently PosExpoClassifier.fit fits the reweighter.
-    # The reweighter calls feature_map.fit_transform(X, y, base_model=None).
-    # So DifficultyFeature will see None and return 0s. 
-    # To use Difficulty, we should ideally pass a base_model to fit/transform.
-    # PosExpoClassifier doesn't expose passing base_model to fit yet.
-    # This is a refinement for future. For now, Difficulty will be 0.
     
     clf = PosExpoClassifier(
         base_estimator=LogisticRegression(),
@@ -72,4 +57,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

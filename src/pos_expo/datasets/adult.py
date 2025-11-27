@@ -1,4 +1,5 @@
 import os
+import warnings
 from typing import Tuple, Optional, Dict
 import pandas as pd
 import numpy as np
@@ -34,9 +35,9 @@ def load_adult_income(
     # Given the constraint of the environment, I will try to use shap/sklearn if available or pd.read_csv.
     
     try:
-        df = pd.read_csv(ADULT_URL, names=COLUMNS, sep=r",\s*", engine="python")
+        df = pd.read_csv(ADULT_URL, names=COLUMNS, sep=",", skipinitialspace=True)
     except Exception as e:
-        print(f"Could not download Adult dataset: {e}")
+        warnings.warn(f"Could not download Adult dataset: {e}. Using dummy data.", category=UserWarning)
         # Return dummy data if download fails (e.g. no network)
         # This allows tests to pass in offline mode if needed, but warning printed.
         return _make_dummy_adult()
@@ -100,4 +101,3 @@ def _make_dummy_adult():
     X = np.random.randn(100, 14)
     y = np.random.randint(0, 2, 100)
     return X[:70], y[:70], X[70:], y[70:], X[70:]
-

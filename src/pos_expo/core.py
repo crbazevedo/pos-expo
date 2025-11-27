@@ -2,6 +2,7 @@ from typing import Optional, Protocol, List, Sequence
 import numpy as np
 
 Array = np.ndarray
+LOG_EPS = 1e-12
 
 class StructuralFeatureMap(Protocol):
     """
@@ -104,4 +105,3 @@ class CompositeFeatureMap:
             return np.empty((X.shape[0], 0))
 
         return np.hstack(outputs)
-

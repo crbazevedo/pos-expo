@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.neighbors import NearestNeighbors
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from ..core import Array, StructuralFeatureMap
+from ..core import Array, StructuralFeatureMap, LOG_EPS
 
 class RarityFeature(BaseEstimator, TransformerMixin):
     """
@@ -16,14 +16,6 @@ class RarityFeature(BaseEstimator, TransformerMixin):
     def __init__(self, k: int = 5) -> None:
         self.k = k
         self.nbrs_: Optional[NearestNeighbors] = None
-
-    def fit_transform(
-        self,
-        X: Array,
-        y: Optional[Array] = None,
-        base_model: Optional[object] = None,
-    ) -> Array:
-        return self.fit(X, y, base_model).transform(X, y, base_model)
 
     def fit(
         self,
@@ -50,8 +42,14 @@ class RarityFeature(BaseEstimator, TransformerMixin):
         mean_dist = distances.mean(axis=1)
         
         # Avoid log(0)
-        eps = 1e-12
-        rarity = np.log(np.maximum(mean_dist, eps))
+        rarity = np.log(np.maximum(mean_dist, LOG_EPS))
         
         return rarity.reshape(-1, 1)
 
+    def fit_transform(
+        self,
+        X: Array,
+        y: Optional[Array] = None,
+        base_model: Optional[object] = None,
+    ) -> Array:
+        return self.fit(X, y, base_model).transform(X, y, base_model)

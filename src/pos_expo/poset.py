@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 from .core import Array
 
 def compute_poset_layers(phi: Array) -> Array:
@@ -21,75 +22,11 @@ def compute_poset_layers(phi: Array) -> Array:
     # Simple iterative approach
     # Ideally we'd build a DAG, but O(N^2) comparison is the bottleneck anyway.
     
-    # Dominance matrix: D[i, j] = 1 if phi[i] <= phi[j] (and i != j)
-    # Actually strictly smaller on at least one dim, and <= on all?
-    # Spec says: z <= z' iff phi_k(z) <= phi_k(z') for all k.
-    
-    # Let's define strictly dominated: i < j iff (phi[i] <= phi[j]).all() and (phi[i] != phi[j]).any()
-    # But for layering, standard product order is reflexive.
-    # Strict order needed for height.
-    
-    # 1. Compute strict dominance
-    # diff[i, j, k] = phi[j, k] - phi[i, k]
-    # This is O(N^2 * K) - heavy memory.
-    
-    # Let's do it loop-based (slower python, less memory) or broadcast chunks.
-    # For small N (diagnostics), N=1000 is fine.
-    
-    layers = np.zeros(n, dtype=int)
-    
-    # Sort by sum(phi) to ensure we process roughly in order? 
-    # Not strictly necessary for the definition, but helps some algos.
-    # We will compute Longest Path in the DAG.
-    
-    # Adjacency: A[i, j] = 1 if i < j (strictly)
-    # Using broadcasting for N <= 1000
     if n > 2000:
-        # Fallback or warning
-        print(f"Warning: compute_poset_layers called with N={n}, this will be slow.")
-    
-    # Expand dims
-    # phi_i: (N, 1, K), phi_j: (1, N, K)
-    # leq: (N, N, K) -> (N, N)
-    phi_i = phi[:, np.newaxis, :]
-    phi_j = phi[np.newaxis, :, :]
-    
-    is_leq = np.all(phi_i <= phi_j, axis=2) # i <= j
-    is_eq = np.all(phi_i == phi_j, axis=2)  # i == j
-    is_strict_less = is_leq & (~is_eq)      # i < j
-    
-    # Compute height: length of longest chain ending at j
-    # H(j) = 1 + max_{i < j} H(i), with H(min) = 0
-    
-    # To solve this, we can iterate. 
-    # Since it's a DAG, we can just repeatedly update until convergence?
-    # Max depth is N.
-    
-    # Initialize layers to 0
-    layers = np.zeros(n, dtype=int)
-    
-    for _ in range(n):
-        prev_layers = layers.copy()
-        
-        # layer[j] = max(layer[i] for i where i < j) + 1
-        # If no i < j, layer[j] = 0.
-        
-        # We can vectorize this update?
-        # A[i, j] is 1 if i < j.
-        # We want max over i of (A[i, j] * (layers[i] + 1))
-        
-        # Create matrix of potential values:
-        # V[i, j] = layers[i] + 1 if i < j else 0
-        
-        # But this is O(N^2) inside loop. Total O(N^3).
-        # A bit slow.
-        
-        # Optimization: Topological sort first?
-        # Sorting by sum of coordinates is a topological sort for product order!
-        # If x < y, then sum(x) < sum(y).
-        break # We'll re-implement using the sort trick below.
+        warnings.warn(f"compute_poset_layers called with N={n}, this will be slow.", category=UserWarning)
         
     # Re-implementation with sort
+    # Topological sort first: Sorting by sum of coordinates is a topological sort for product order!
     scores = phi.sum(axis=1)
     perm = np.argsort(scores)
     inv_perm = np.argsort(perm)
@@ -129,4 +66,3 @@ def compute_poset_layers(phi: Array) -> Array:
     # Map back to original indices
     layers = layers_sorted[inv_perm]
     return layers
-

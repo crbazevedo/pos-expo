@@ -2,7 +2,7 @@ from typing import Optional, Dict, Any
 import numpy as np
 from sklearn.linear_model import Ridge, LogisticRegression
 
-from .core import StructuralFeatureMap, Array
+from .core import StructuralFeatureMap, Array, LOG_EPS
 
 def estimate_log_density_ratio(
     X_train: Array,
@@ -91,8 +91,7 @@ class PosExpoReweighter:
 
         if iw_star is not None:
             # Case 1: Oracle weights provided
-            eps = 1e-12
-            target_log_w = np.log(np.maximum(iw_star, eps))
+            target_log_w = np.log(np.maximum(iw_star, LOG_EPS))
             
         elif X_ref is not None:
             # Case 2: Estimate from X_ref

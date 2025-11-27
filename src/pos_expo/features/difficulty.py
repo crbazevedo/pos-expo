@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin, is_classifier
 from sklearn.metrics import log_loss
 
-from ..core import Array, StructuralFeatureMap
+from ..core import Array, StructuralFeatureMap, LOG_EPS
 
 class DifficultyFeature(BaseEstimator, TransformerMixin):
     """
@@ -17,14 +17,6 @@ class DifficultyFeature(BaseEstimator, TransformerMixin):
     - If base_model is None, returns 0s (feature unavailable).
     """
     
-    def fit_transform(
-        self,
-        X: Array,
-        y: Optional[Array] = None,
-        base_model: Optional[Any] = None,
-    ) -> Array:
-        return self.fit(X, y, base_model).transform(X, y, base_model)
-        
     def fit(
         self,
         X: Array,
@@ -69,14 +61,12 @@ class DifficultyFeature(BaseEstimator, TransformerMixin):
                     p_true = probas[np.arange(len(y)), y_idx]
                     
                 # Loss = -log(p_true)
-                eps = 1e-12
-                difficulty = -np.log(np.maximum(p_true, eps))
+                difficulty = -np.log(np.maximum(p_true, LOG_EPS))
                 
             else:
                 # Unsupervised difficulty: Uncertainty (Entropy)
                 # H(p) = - sum p log p
-                eps = 1e-12
-                entropy = -np.sum(probas * np.log(np.maximum(probas, eps)), axis=1)
+                entropy = -np.sum(probas * np.log(np.maximum(probas, LOG_EPS)), axis=1)
                 difficulty = entropy
                 
         else:
@@ -93,3 +83,10 @@ class DifficultyFeature(BaseEstimator, TransformerMixin):
                 
         return difficulty.reshape(-1, 1)
 
+    def fit_transform(
+        self,
+        X: Array,
+        y: Optional[Array] = None,
+        base_model: Optional[Any] = None,
+    ) -> Array:
+        return self.fit(X, y, base_model).transform(X, y, base_model)
