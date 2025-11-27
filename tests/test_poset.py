@@ -34,3 +34,4 @@ def test_poset_layers_branch():
     assert layers[2] == 1
     assert layers[3] == 2
 
+

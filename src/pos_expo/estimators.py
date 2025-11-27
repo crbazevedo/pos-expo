@@ -9,6 +9,17 @@ from .tilt import PosExpoReweighter
 class PosExpoClassifier(BaseEstimator, ClassifierMixin):
     """
     Classifier that uses POS-Expo reweighting to correct for selection bias.
+    
+    Parameters
+    ----------
+    base_estimator : estimator object
+        The base estimator to be fitted on reweighted data.
+    feature_map : StructuralFeatureMap
+        The feature map object (e.g., from build_default_feature_map).
+    reweighter : PosExpoReweighter, optional
+        Pre-constructed reweighter instance. If None, one is created.
+    alpha_reg : float, default=1e-3
+        Regularization strength for the reweighter (L2 penalty on alpha).
     """
     
     def __init__(
@@ -31,9 +42,24 @@ class PosExpoClassifier(BaseEstimator, ClassifierMixin):
         2. Fit reweighter (using X_ref or iw_star).
         3. Compute weights.
         4. Fit base_estimator with weights.
-        """
-        X, y = check_X_y(X, y)
         
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data.
+        y : array-like of shape (n_samples,)
+            Target values.
+        X_ref : array-like of shape (n_samples_ref, n_features), optional
+            Reference samples approximating the target distribution.
+        iw_star : array-like of shape (n_samples,), optional
+            Oracle importance weights (for testing/validation).
+        """
+        # Checks for NaNs/Infs done by check_X_y
+        X, y = check_X_y(X, y, accept_sparse=False, force_all_finite=True)
+        
+        if X_ref is not None:
+             X_ref = check_array(X_ref, accept_sparse=False, force_all_finite=True)
+
         # Initialize reweighter if not provided
         if self.reweighter is None:
             self.reweighter_ = PosExpoReweighter(
@@ -48,6 +74,11 @@ class PosExpoClassifier(BaseEstimator, ClassifierMixin):
         
         # 3. Compute weights
         weights = self.reweighter_.compute_weights(X, y)
+        
+        # Safety: Clip extreme weights to avoid instability in base estimator
+        # E.g. max weight 1000x mean
+        # This is a robustness heuristic.
+        # weights = np.clip(weights, 0, 1000.0) 
         
         # 4. Fit base estimator
         self.estimator_ = clone(self.base_estimator)
@@ -93,7 +124,10 @@ class PosExpoRegressor(BaseEstimator, RegressorMixin):
         self.alpha_reg = alpha_reg
 
     def fit(self, X, y, X_ref=None, iw_star=None):
-        X, y = check_X_y(X, y)
+        X, y = check_X_y(X, y, accept_sparse=False, force_all_finite=True)
+        
+        if X_ref is not None:
+             X_ref = check_array(X_ref, accept_sparse=False, force_all_finite=True)
         
         if self.reweighter is None:
             self.reweighter_ = PosExpoReweighter(
@@ -115,4 +149,3 @@ class PosExpoRegressor(BaseEstimator, RegressorMixin):
         check_is_fitted(self, ["estimator_", "reweighter_"])
         X = check_array(X)
         return self.estimator_.predict(X)
-

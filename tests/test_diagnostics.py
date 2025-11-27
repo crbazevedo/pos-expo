@@ -25,3 +25,4 @@ def test_structural_moments():
     # Std: 1, 1
     assert np.allclose(moments["std"], [1, 1])
 
+

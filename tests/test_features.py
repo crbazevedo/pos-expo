@@ -64,3 +64,4 @@ def test_default_feature_map():
     # Rarity(1) + Difficulty(1) + Diversity(1) = 3 cols
     assert out.shape == (20, 3)
 
+

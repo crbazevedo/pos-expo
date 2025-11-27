@@ -69,3 +69,4 @@ def test_posexpo_classifier_oracle():
     probs = clf.predict_proba(X_test)
     assert probs.shape == (1000, 2)
 
+

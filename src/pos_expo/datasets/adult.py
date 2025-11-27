@@ -40,7 +40,7 @@ def load_adult_income(
         warnings.warn(f"Could not download Adult dataset: {e}. Using dummy data.", category=UserWarning)
         # Return dummy data if download fails (e.g. no network)
         # This allows tests to pass in offline mode if needed, but warning printed.
-        return _make_dummy_adult()
+        return _make_dummy_adult(random_state)
 
     # Preprocessing
     # Drop rows with missing values
@@ -96,8 +96,9 @@ def load_adult_income(
         
     return X_train, y_train, X_test, y_test, X_ref
 
-def _make_dummy_adult():
+def _make_dummy_adult(random_state: int = 42):
     # Fallback for offline environments
-    X = np.random.randn(100, 14)
-    y = np.random.randint(0, 2, 100)
+    rng = np.random.RandomState(random_state)
+    X = rng.randn(100, 14)
+    y = rng.randint(0, 2, 100)
     return X[:70], y[:70], X[70:], y[70:], X[70:]
